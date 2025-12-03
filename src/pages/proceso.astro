@@ -1,0 +1,47 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { ProcessWPSchema } from "@/types";
+import { Picture, inferRemoteSize } from "astro:assets";
+const url = `${import.meta.env.API_URL}/pages?slug=proceso`
+const res = await fetch(url);
+const json = await res.json();
+const data = ProcessWPSchema.parse(json[0]);
+
+const processKey = Array.from({length: 5}, (_, i) => `process_${i + 1}`);
+
+---
+
+<Layout 
+    subtitle={data.acf.subtitle}
+    bgImage={data.feature_images.full.url}
+    title={data.title.rendered}>
+
+    <div class="text-xl space-y-3 mt-10 lg:mt-0" set:html={data.content.rendered}></div>
+    <div class="mt-10 space-y-10">
+        {processKey.map(async(key, i)=>{
+            
+            const {title, description, image} = data.acf[key];
+
+            const {width, height} = await inferRemoteSize(image);
+
+            return(
+                <section class="flex gap-10 flex-col lg:flex-row lg:items-center">
+                    <div class={`w-full lg:w-1/2 ${i % 2 === 0? "lg:order-1" : "lg:order-2"}`}>
+                        <Picture
+                            src={image}
+                            width={width}
+                            height={height}
+                            alt={`Imagen de ${data.title.rendered} - ${title}`}
+                            class="w-full h-auto object-cover rounded-md shadow-md"
+                        />
+                    </div>
+
+                    <div class={`w-full lg:w-1/2 ${i % 2 === 0? "lg:order-2" : "lg:order-1"}`}>
+                        <h3 class="text-coffee-900 font-black text-4xl pb-10 uppercase">{title}</h3>
+                        <p class="text-lg">{description}</p>
+                    </div>
+                </section>
+            )
+        })}
+    </div>
+</Layout>

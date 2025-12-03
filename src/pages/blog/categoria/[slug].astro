@@ -1,0 +1,39 @@
+---
+import PostCard from '@/components/blog/PostCard.astro';
+import Layout from '@/layouts/Layout.astro';
+import { CategoriesSlugSchema, CategorySchema , PostsSchema} from '@/types/index.ts';
+export async function getStaticPaths(){
+    const res = await fetch(`${import.meta.env.API_URL}/categories?_fields=slug`);
+    const json = await res.json();
+    const categories = CategoriesSlugSchema.parse(json);
+    return categories.map(cat => ({
+        params: { slug: cat.slug }
+    }));  
+}
+
+const {slug} = Astro.params;
+
+const catUrl = `${import.meta.env.API_URL}/categories?slug=${slug}`;
+const catRes = await fetch(catUrl);
+const catJson = await catRes.json();
+const category = CategorySchema.parse(catJson[0]);
+
+const postUrl = `${import.meta.env.API_URL}/posts?categories=${category.id}`;
+const postRes = await fetch(postUrl);
+const postJson = await postRes.json();
+const posts = PostsSchema.parse(postJson)
+
+
+---
+
+<Layout 
+    title={`Posts en la Categoría: ${category.name}`}
+    subtitle={`Posts en la Categoría: ${category.name}`}
+    bgImage={posts[0].feature_images.full.url}
+>
+    {posts.map(post => (
+       <PostCard post={post}/>
+    ))}
+</Layout>
+
+
